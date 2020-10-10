@@ -5,6 +5,8 @@ from __future__ import unicode_literals
 import bleach
 import misaka
 
+from configparser import NoOptionError
+
 
 class Sanitizer(object):
 
@@ -49,9 +51,9 @@ class Sanitizer(object):
 
 
 def Markdown(extensions=("strikethrough", "superscript", "autolink",
-                         "fenced-code")):
+                         "fenced-code"), flags=[]):
 
-    renderer = Unofficial()
+    renderer = Unofficial(flags=flags)
     md = misaka.Markdown(renderer, extensions=extensions)
 
     def inner(text):
@@ -80,7 +82,11 @@ class Markup(object):
 
     def __init__(self, conf):
 
-        parser = Markdown(conf.getlist("options"))
+        try:
+            conf_flags = conf.getlist("flags")
+        except NoOptionError:
+            conf_flags = []
+        parser = Markdown(extensions=conf.getlist("options"), flags=conf_flags)
         sanitizer = Sanitizer(
             conf.getlist("allowed-elements"),
             conf.getlist("allowed-attributes"))
